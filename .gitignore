@@ -1,0 +1,6 @@
+.DS_Store
+node_modules/
+*.log
+
+# 內部開發文檔走 symlink 指向 vault，不推進 GitHub
+docs/internal
