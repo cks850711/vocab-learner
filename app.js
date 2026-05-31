@@ -364,13 +364,14 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-// AI 指令行：選取此區塊 → Chrome Gemini/AI 搜尋會自動收到這段指令
+// AI 指令行：點「搜尋」直接開 Google 並把指令填進搜尋框（最可靠），或複製後自行貼上
 function renderAiPrompt(word) {
   const text = fillAiPrompt(word);
   return `
     <div class="ai-prompt" data-ai-text="${escapeHtml(text)}">
       <span class="ai-prompt-icon">✨</span>
       <span class="ai-prompt-text">${escapeHtml(text)}</span>
+      <button class="ai-prompt-btn" data-action="search-ai" title="用 Google AI 搜尋">🔍 搜尋</button>
       <button class="ai-prompt-copy" data-action="copy-ai" title="複製指令">📋</button>
     </div>
   `;
@@ -447,6 +448,17 @@ function onCardClick(e) {
   // 發音按鈕：直接讀 dataset.word，不依賴 queue
   if (action === "speak") {
     speakWord(e.target.dataset.word);
+    return;
+  }
+
+  // 搜尋 AI：開新分頁到 Google，把指令預先填進搜尋框（AI Overview/Gemini 會回答）
+  if (action === "search-ai") {
+    const box = e.target.closest(".ai-prompt");
+    const text = box?.dataset.aiText || "";
+    if (text) {
+      const url = "https://www.google.com/search?q=" + encodeURIComponent(text);
+      window.open(url, "_blank", "noopener");
+    }
     return;
   }
 

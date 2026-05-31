@@ -326,6 +326,21 @@
     user-select: all;            /* 點一下即可全選整段，方便交給 AI */
     -webkit-user-select: all;
   }
+  .ai-prompt-btn {
+    flex-shrink: 0;
+    background: var(--purple);
+    border: 1px solid var(--purple);
+    color: var(--bg);
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .ai-prompt-btn:hover { opacity: 0.88; }
   .ai-prompt-copy {
     flex-shrink: 0;
     background: transparent;
@@ -368,6 +383,9 @@
     min-width: 320px;
     max-width: 480px;
     width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .modal-content h2 {
     margin: 0 0 16px;
@@ -810,9 +828,9 @@
 <!-- compromise.js (lemmatizer) -->
 <script src="https://cdn.jsdelivr.net/npm/compromise@14/builds/compromise.min.js"></script>
 
-<script src="storage.js?v=10"></script>
-<script src="parser.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="storage.js?v=11"></script>
+<script src="parser.js?v=11"></script>
+<script src="app.js?v=11"></script>
 
 </body>
 </html>
