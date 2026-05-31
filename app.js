@@ -351,6 +351,31 @@ function renderCardWord(word) {
   `;
 }
 
+// 把 AI 指令範本的 {word} 換成實際單字
+function fillAiPrompt(word) {
+  const tmpl = STATE.aiPrompt || window.VocabStorage.DEFAULT_AI_PROMPT;
+  return tmpl.replace(/\{word\}/g, word);
+}
+
+// HTML 屬性逃脫（給 data-* 與 textarea 用）
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// AI 指令行：選取此區塊 → Chrome Gemini/AI 搜尋會自動收到這段指令
+function renderAiPrompt(word) {
+  const text = fillAiPrompt(word);
+  return `
+    <div class="ai-prompt" data-ai-text="${escapeHtml(text)}">
+      <span class="ai-prompt-icon">✨</span>
+      <span class="ai-prompt-text">${escapeHtml(text)}</span>
+      <button class="ai-prompt-copy" data-action="copy-ai" title="複製指令">📋</button>
+    </div>
+  `;
+}
+
 // 顯示單字的等級標籤：GEPT 字 → 等級（藍色）；自加 → 「自加」（紫色）
 function renderLevelTag(word) {
   const entry = GEPT_DB[word];
@@ -422,6 +447,19 @@ function onCardClick(e) {
   // 發音按鈕：直接讀 dataset.word，不依賴 queue
   if (action === "speak") {
     speakWord(e.target.dataset.word);
+    return;
+  }
+
+  // 複製 AI 指令：讀同一個 .ai-prompt 容器的 data-ai-text
+  if (action === "copy-ai") {
+    const box = e.target.closest(".ai-prompt");
+    const text = box?.dataset.aiText || "";
+    if (text && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        e.target.textContent = "✓";
+        setTimeout(() => { e.target.textContent = "📋"; }, 1200);
+      });
+    }
     return;
   }
 
@@ -498,6 +536,7 @@ function showAnswerDirect(word, mode) {
           <span class="correct-ans">${correctP.join(", ")}</span>
         </div>
       </div>
+      ${renderAiPrompt(word)}
       <div class="hint">看完正解，下次再考</div>
       <div class="card-actions">
         <button class="btn-secondary" data-action="next">下一張</button>
@@ -539,6 +578,7 @@ function showAnswerCompare(word, mode) {
           <span class="correct-ans">${correctP.join(", ")}</span>
         </div>
       </div>
+      ${renderAiPrompt(word)}
       <div class="hint">你覺得自己懂了嗎？</div>
       <div class="card-actions">
         <button class="btn-x" data-action="final-x">✗ 沒記住</button>
@@ -579,6 +619,10 @@ function openSettings() {
   select.innerHTML = html;
   select.value = STATE.voiceName || "auto";
 
+  // AI 指令範本
+  document.getElementById("ai-prompt-input").value =
+    STATE.aiPrompt || window.VocabStorage.DEFAULT_AI_PROMPT;
+
   document.getElementById("settings-modal").style.display = "flex";
 }
 
@@ -608,6 +652,8 @@ function resetDb(scope) {
       userAdded: {},
       heatmap: {},
       resetDays: { ...window.VocabStorage.DEFAULT_RESET_DAYS },
+      voiceName: STATE.voiceName,   // 偏好設定，重設保留
+      aiPrompt: STATE.aiPrompt,     // 偏好設定，重設保留
     };
   }
   window.VocabStorage.saveState(STATE);
@@ -632,6 +678,8 @@ function saveSettings() {
   };
   STATE.voiceName = document.getElementById("voice-select").value;
   _selectedVoice = getActiveVoice();
+  const aiVal = document.getElementById("ai-prompt-input").value.trim();
+  STATE.aiPrompt = aiVal || window.VocabStorage.DEFAULT_AI_PROMPT;
   window.VocabStorage.saveState(STATE);
   closeSettings();
   setStatus("設定已儲存");

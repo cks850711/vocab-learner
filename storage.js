@@ -9,6 +9,10 @@ const DEFAULT_RESET_DAYS = {
   "優級": 30,
 };
 
+// AI 指令範本：{word} 會被替換成當前單字。供 Chrome 選取 → Gemini/AI 搜尋自動帶入。
+const DEFAULT_AI_PROMPT =
+  "請針對英文單字「{word}」提供：① 三個實用例句（附中譯）② 字根／字首／字尾拆解 ③ 此字的單字歷史";
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -20,6 +24,7 @@ function loadState() {
       heatmap: s.heatmap || {},
       resetDays: { ...DEFAULT_RESET_DAYS, ...(s.resetDays || {}) },
       voiceName: s.voiceName || "auto",
+      aiPrompt: s.aiPrompt || DEFAULT_AI_PROMPT,
     };
   } catch (e) {
     console.error("loadState 失敗", e);
@@ -34,6 +39,7 @@ function defaultState() {
     heatmap: {},         // { "YYYY-MM-DD": count }（獨立事件記錄，不受重設影響）
     resetDays: { ...DEFAULT_RESET_DAYS },
     voiceName: "auto",   // 發音語音名稱，"auto" = 自動選擇最好的
+    aiPrompt: DEFAULT_AI_PROMPT,  // AI 指令範本（{word} 佔位符）
   };
 }
 
@@ -82,6 +88,8 @@ function importFromFile(file) {
           userAdded: data.userAdded || {},
           heatmap: data.heatmap || {},
           resetDays: { ...DEFAULT_RESET_DAYS, ...(data.resetDays || {}) },
+          voiceName: data.voiceName || "auto",
+          aiPrompt: data.aiPrompt || DEFAULT_AI_PROMPT,
         };
         resolve(state);
       } catch (err) {
@@ -124,5 +132,5 @@ window.VocabStorage = {
   loadState, saveState,
   exportToFile, importFromFile,
   isMastered, markMastered, addUserWord, recordEvent, localDateKey,
-  DEFAULT_RESET_DAYS,
+  DEFAULT_RESET_DAYS, DEFAULT_AI_PROMPT,
 };

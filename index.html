@@ -301,6 +301,48 @@
     font-size: 13px;
   }
 
+  /* AI 指令行 — 供 Chrome 選取交給 Gemini/AI 搜尋 */
+  .ai-prompt {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 10px;
+    background: rgba(188, 140, 255, 0.08);
+    border: 1px dashed var(--purple);
+    border-radius: 8px;
+    text-align: left;
+  }
+  .ai-prompt-icon {
+    flex-shrink: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .ai-prompt-text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    user-select: all;            /* 點一下即可全選整段，方便交給 AI */
+    -webkit-user-select: all;
+  }
+  .ai-prompt-copy {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .ai-prompt-copy:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+  }
+
   .empty {
     text-align: center;
     padding: 60px 20px;
@@ -721,6 +763,10 @@
     </div>
     <div class="modal-help">macOS 可至「系統設定 → 輔助使用 → 朗讀內容 → 系統聲音 → 管理聲音」下載「進階版」語音以獲得真人音質。</div>
 
+    <h2 style="margin-top:20px">AI 指令範本</h2>
+    <textarea id="ai-prompt-input" rows="3" style="width:100%; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-family:inherit; font-size:14px; resize:vertical;"></textarea>
+    <div class="modal-help">顯示在字卡正解下方，供 Chrome 選取後交給 Gemini／AI 搜尋。<code>{word}</code> 會自動替換成當前單字。</div>
+
     <div class="danger-zone">
       <div class="danger-title">⚠️ 危險區域</div>
       <div class="danger-help">建議重設前先按「匯出」備份。</div>
@@ -764,9 +810,9 @@
 <!-- compromise.js (lemmatizer) -->
 <script src="https://cdn.jsdelivr.net/npm/compromise@14/builds/compromise.min.js"></script>
 
-<script src="storage.js?v=9"></script>
-<script src="parser.js?v=9"></script>
-<script src="app.js?v=9"></script>
+<script src="storage.js?v=10"></script>
+<script src="parser.js?v=10"></script>
+<script src="app.js?v=10"></script>
 
 </body>
 </html>
