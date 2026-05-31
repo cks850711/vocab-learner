@@ -364,15 +364,27 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-// AI 指令行：點「搜尋」直接開 Google 並把指令填進搜尋框（最可靠），或複製後自行貼上
-function renderAiPrompt(word) {
-  const text = fillAiPrompt(word);
+// 組合「參考資料」附在搜尋指令後，讓 AI 依正解字義/詞性給更精準的例句
+function buildAiContext(ctx) {
+  if (!ctx) return "";
+  const parts = [];
+  if (ctx.correctZ) parts.push(`正解字義＝${ctx.correctZ}`);
+  if (ctx.correctP && ctx.correctP.length) parts.push(`正解詞性＝${ctx.correctP.join(", ")}`);
+  if (ctx.userZ) parts.push(`我的作答字義＝${ctx.userZ}`);
+  if (ctx.userPos && ctx.userPos.length) parts.push(`我的作答詞性＝${ctx.userPos.join(", ")}`);
+  return parts.length ? `（參考：${parts.join("；")}）` : "";
+}
+
+// AI 指令行：點「搜尋」直接開 Google 並把指令 + 參考資料填進搜尋框
+function renderAiPrompt(word, ctx) {
+  const instruction = fillAiPrompt(word);            // 顯示給人看的指令
+  const context = buildAiContext(ctx);
+  const query = context ? `${instruction} ${context}` : instruction;  // 實際送出的查詢
   return `
-    <div class="ai-prompt" data-ai-text="${escapeHtml(text)}">
+    <div class="ai-prompt" data-ai-text="${escapeHtml(query)}">
       <span class="ai-prompt-icon">✨</span>
-      <span class="ai-prompt-text">${escapeHtml(text)}</span>
+      <span class="ai-prompt-text">${escapeHtml(instruction)}</span>
       <button class="ai-prompt-btn" data-action="search-ai" title="用 Google AI 搜尋">🔍 搜尋</button>
-      <button class="ai-prompt-copy" data-action="copy-ai" title="複製指令">📋</button>
     </div>
   `;
 }
@@ -462,19 +474,6 @@ function onCardClick(e) {
     return;
   }
 
-  // 複製 AI 指令：讀同一個 .ai-prompt 容器的 data-ai-text
-  if (action === "copy-ai") {
-    const box = e.target.closest(".ai-prompt");
-    const text = box?.dataset.aiText || "";
-    if (text && navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        e.target.textContent = "✓";
-        setTimeout(() => { e.target.textContent = "📋"; }, 1200);
-      });
-    }
-    return;
-  }
-
   const { word, mode } = queue[queueIdx];
 
   if (action === "save-unknown") {
@@ -548,7 +547,7 @@ function showAnswerDirect(word, mode) {
           <span class="correct-ans">${correctP.join(", ")}</span>
         </div>
       </div>
-      ${renderAiPrompt(word)}
+      ${renderAiPrompt(word, { correctZ, correctP })}
       <div class="hint">看完正解，下次再考</div>
       <div class="card-actions">
         <button class="btn-secondary" data-action="next">下一張</button>
@@ -590,7 +589,7 @@ function showAnswerCompare(word, mode) {
           <span class="correct-ans">${correctP.join(", ")}</span>
         </div>
       </div>
-      ${renderAiPrompt(word)}
+      ${renderAiPrompt(word, { correctZ, correctP, userZ: userMeaning, userPos })}
       <div class="hint">你覺得自己懂了嗎？</div>
       <div class="card-actions">
         <button class="btn-x" data-action="final-x">✗ 沒記住</button>

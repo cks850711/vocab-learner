@@ -11,7 +11,7 @@ const DEFAULT_RESET_DAYS = {
 
 // AI 指令範本：{word} 會被替換成當前單字。供 Chrome 選取 → Gemini/AI 搜尋自動帶入。
 const DEFAULT_AI_PROMPT =
-  "請針對英文單字「{word}」提供：① 三個實用例句（附中譯）② 字根／字首／字尾拆解 ③ 此字的單字歷史";
+  "請針對英文單字「{word}」提供：① 針對正解字義與正解詞性提供實用例句（附中譯）② 字根／字首／字尾拆解 ③ 此字的單字歷史(如能具體到年份範圍也請提供)";
 
 function loadState() {
   try {
