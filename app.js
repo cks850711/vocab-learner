@@ -170,6 +170,7 @@ function bindEvents() {
   document.getElementById("btn-reset-mastered").addEventListener("click", () => resetDb("mastered"));
   document.getElementById("btn-reset-userAdded").addEventListener("click", () => resetDb("userAdded"));
   document.getElementById("btn-reset-heatmap").addEventListener("click", () => resetDb("heatmap"));
+  document.getElementById("btn-reset-aiPrompts").addEventListener("click", () => resetDb("aiPrompts"));
   document.getElementById("btn-reset-all").addEventListener("click", () => resetDb("all"));
 
   // 字卡按鈕（事件委派）
@@ -387,7 +388,7 @@ function renderAiPrompt(word, ctx, mode = "review") {
   return `
     <div class="ai-prompt" data-ai-text="${escapeHtml(query)}">
       <span class="ai-prompt-icon">✨</span>
-      <span class="ai-prompt-text">${escapeHtml(instruction)}</span>
+      <span class="ai-prompt-text" data-action="toggle-ai" title="點一下展開／收起">${escapeHtml(instruction)}</span>
       <button class="ai-prompt-btn" data-action="search-ai" title="用 Google AI 搜尋">🔍 搜尋</button>
     </div>
   `;
@@ -465,6 +466,12 @@ function onCardClick(e) {
   // 發音按鈕：直接讀 dataset.word，不依賴 queue
   if (action === "speak") {
     speakWord(e.target.dataset.word);
+    return;
+  }
+
+  // 點 AI 指令文字：展開／收起
+  if (action === "toggle-ai") {
+    e.target.closest(".ai-prompt")?.classList.toggle("expanded");
     return;
   }
 
@@ -654,6 +661,7 @@ function resetDb(scope) {
     mastered: `已背起來紀錄（${Object.keys(STATE.mastered).length} 字）`,
     userAdded: `自加單字（${Object.keys(STATE.userAdded).length} 字）`,
     heatmap: `熱力圖（${heatmapDays} 天的學習事件記錄）`,
+    aiPrompts: "AI 指令範本（兩個範本回復成預設）",
     all: "全部資料（已背起來 + 自加單字 + 熱力圖 + 等級設定）",
   };
   const msg = `⚠️ 危險操作\n\n即將清除：${labels[scope]}\n\n此動作無法復原。建議先「匯出」備份。\n\n確定要重設嗎？`;
@@ -664,6 +672,9 @@ function resetDb(scope) {
     STATE.userAdded = {};
   } else if (scope === "heatmap") {
     STATE.heatmap = {};
+  } else if (scope === "aiPrompts") {
+    STATE.aiPrompt = window.VocabStorage.DEFAULT_AI_PROMPT;
+    STATE.aiPromptNew = window.VocabStorage.DEFAULT_AI_PROMPT_NEW;
   } else if (scope === "all") {
     STATE = {
       mastered: {},

@@ -304,10 +304,10 @@
   /* AI 指令行 — 供 Chrome 選取交給 Gemini/AI 搜尋 */
   .ai-prompt {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 8px;
     margin-top: 12px;
-    padding: 8px 10px;
+    padding: 6px 10px;
     background: rgba(188, 140, 255, 0.08);
     border: 1px dashed var(--purple);
     border-radius: 8px;
@@ -316,15 +316,30 @@
   .ai-prompt-icon {
     flex-shrink: 0;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1;
   }
   .ai-prompt-text {
     flex: 1;
+    min-width: 0;                /* flex 子元素截斷必備 */
     font-size: 13px;
-    color: var(--text);
+    color: var(--text-dim);
     line-height: 1.5;
-    user-select: all;            /* 點一下即可全選整段，方便交給 AI */
-    -webkit-user-select: all;
+    cursor: pointer;
+    /* 預設收疊單行 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ai-prompt.expanded {
+    align-items: flex-start;
+  }
+  .ai-prompt.expanded .ai-prompt-text {
+    color: var(--text);
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    padding-top: 6px;
+    padding-bottom: 6px;
   }
   .ai-prompt-btn {
     flex-shrink: 0;
@@ -780,6 +795,7 @@
         <button id="btn-reset-mastered" class="btn-danger">清除已背紀錄</button>
         <button id="btn-reset-userAdded" class="btn-danger">清除自加單字</button>
         <button id="btn-reset-heatmap" class="btn-danger">重置熱力圖</button>
+        <button id="btn-reset-aiPrompts" class="btn-danger">重置提示詞</button>
         <button id="btn-reset-all" class="btn-danger">全部重設</button>
       </div>
     </div>
@@ -816,9 +832,9 @@
 <!-- compromise.js (lemmatizer) -->
 <script src="https://cdn.jsdelivr.net/npm/compromise@14/builds/compromise.min.js"></script>
 
-<script src="storage.js?v=13"></script>
-<script src="parser.js?v=13"></script>
-<script src="app.js?v=13"></script>
+<script src="storage.js?v=14"></script>
+<script src="parser.js?v=14"></script>
+<script src="app.js?v=14"></script>
 
 </body>
 </html>
