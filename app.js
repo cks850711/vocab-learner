@@ -352,8 +352,11 @@ function renderCardWord(word) {
 }
 
 // 把 AI 指令範本的 {word} 換成實際單字
-function fillAiPrompt(word) {
-  const tmpl = STATE.aiPrompt || window.VocabStorage.DEFAULT_AI_PROMPT;
+// mode: "review"（複習，預設）/ "new"（新單字加入）
+function fillAiPrompt(word, mode = "review") {
+  const tmpl = mode === "new"
+    ? (STATE.aiPromptNew || window.VocabStorage.DEFAULT_AI_PROMPT_NEW)
+    : (STATE.aiPrompt || window.VocabStorage.DEFAULT_AI_PROMPT);
   return tmpl.replace(/\{word\}/g, word);
 }
 
@@ -376,10 +379,11 @@ function buildAiContext(ctx) {
 }
 
 // AI 指令行：點「搜尋」直接開 Google 並把指令 + 參考資料填進搜尋框
-function renderAiPrompt(word, ctx) {
-  const instruction = fillAiPrompt(word);            // 顯示給人看的指令
-  const context = buildAiContext(ctx);
-  const query = context ? `${instruction} ${context}` : instruction;  // 實際送出的查詢
+// mode: "review"（複習，預設）/ "new"（新單字加入，使用獨立範本，無 ctx）
+function renderAiPrompt(word, ctx, mode = "review") {
+  const instruction = fillAiPrompt(word, mode);
+  const context = mode === "new" ? "" : buildAiContext(ctx);  // 新單字沒有正解可參考
+  const query = context ? `${instruction} ${context}` : instruction;
   return `
     <div class="ai-prompt" data-ai-text="${escapeHtml(query)}">
       <span class="ai-prompt-icon">✨</span>
@@ -415,6 +419,7 @@ function showUnknownForm(word, progress) {
       </div>
       ${renderCardWord(word)}
       <div class="hint">新單字，請輸入字義加入單字庫</div>
+      ${renderAiPrompt(word, null, "new")}
       <div class="form-row">
         <label>字義</label>
         <input type="text" id="user-meaning" placeholder="輸入中文字義" autofocus>
@@ -630,9 +635,11 @@ function openSettings() {
   select.innerHTML = html;
   select.value = STATE.voiceName || "auto";
 
-  // AI 指令範本
+  // AI 指令範本（兩個）
   document.getElementById("ai-prompt-input").value =
     STATE.aiPrompt || window.VocabStorage.DEFAULT_AI_PROMPT;
+  document.getElementById("ai-prompt-new-input").value =
+    STATE.aiPromptNew || window.VocabStorage.DEFAULT_AI_PROMPT_NEW;
 
   document.getElementById("settings-modal").style.display = "flex";
 }
@@ -663,8 +670,9 @@ function resetDb(scope) {
       userAdded: {},
       heatmap: {},
       resetDays: { ...window.VocabStorage.DEFAULT_RESET_DAYS },
-      voiceName: STATE.voiceName,   // 偏好設定，重設保留
-      aiPrompt: STATE.aiPrompt,     // 偏好設定，重設保留
+      voiceName: STATE.voiceName,         // 偏好設定，重設保留
+      aiPrompt: STATE.aiPrompt,           // 偏好設定，重設保留
+      aiPromptNew: STATE.aiPromptNew,     // 偏好設定，重設保留
     };
   }
   window.VocabStorage.saveState(STATE);
@@ -691,6 +699,8 @@ function saveSettings() {
   _selectedVoice = getActiveVoice();
   const aiVal = document.getElementById("ai-prompt-input").value.trim();
   STATE.aiPrompt = aiVal || window.VocabStorage.DEFAULT_AI_PROMPT;
+  const aiNewVal = document.getElementById("ai-prompt-new-input").value.trim();
+  STATE.aiPromptNew = aiNewVal || window.VocabStorage.DEFAULT_AI_PROMPT_NEW;
   window.VocabStorage.saveState(STATE);
   closeSettings();
   setStatus("設定已儲存");

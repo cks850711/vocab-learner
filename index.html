@@ -765,9 +765,13 @@
     </div>
     <div class="modal-help">macOS 可至「系統設定 → 輔助使用 → 朗讀內容 → 系統聲音 → 管理聲音」下載「進階版」語音以獲得真人音質。</div>
 
-    <h2 style="margin-top:20px">AI 指令範本</h2>
+    <h2 style="margin-top:20px">AI 指令範本（複習字卡用）</h2>
     <textarea id="ai-prompt-input" rows="3" style="width:100%; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-family:inherit; font-size:14px; resize:vertical;"></textarea>
-    <div class="modal-help">顯示在字卡正解下方，供 Chrome 選取後交給 Gemini／AI 搜尋。<code>{word}</code> 會自動替換成當前單字。</div>
+    <div class="modal-help">顯示在「已知字卡」的正解下方。搜尋時會自動附帶正解字義/詞性與你的作答。<code>{word}</code> 會替換成當前單字。</div>
+
+    <h2 style="margin-top:20px">AI 指令範本（新單字加入用）</h2>
+    <textarea id="ai-prompt-new-input" rows="4" style="width:100%; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-family:inherit; font-size:14px; resize:vertical;"></textarea>
+    <div class="modal-help">顯示在「生字字卡」的輸入框上方。沒有正解可帶，目標是讓 AI 幫忙判斷詞性與字義。<code>{word}</code> 會替換成當前單字。</div>
 
     <div class="danger-zone">
       <div class="danger-title">⚠️ 危險區域</div>
@@ -812,9 +816,9 @@
 <!-- compromise.js (lemmatizer) -->
 <script src="https://cdn.jsdelivr.net/npm/compromise@14/builds/compromise.min.js"></script>
 
-<script src="storage.js?v=12"></script>
-<script src="parser.js?v=12"></script>
-<script src="app.js?v=12"></script>
+<script src="storage.js?v=13"></script>
+<script src="parser.js?v=13"></script>
+<script src="app.js?v=13"></script>
 
 </body>
 </html>

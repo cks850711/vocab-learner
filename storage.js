@@ -9,9 +9,14 @@ const DEFAULT_RESET_DAYS = {
   "優級": 30,
 };
 
-// AI 指令範本：{word} 會被替換成當前單字。供 Chrome 選取 → Gemini/AI 搜尋自動帶入。
+// AI 指令範本：{word} 會被替換成當前單字
+// 用於「複習字卡」：有正解可參考，重點是給例句、字根、歷史
 const DEFAULT_AI_PROMPT =
   "請針對英文單字「{word}」提供：① 針對正解字義與正解詞性提供實用例句（附中譯）② 字根／字首／字尾拆解 ③ 此字的單字歷史(如能具體到年份範圍也請提供)";
+
+// 用於「新單字加入」：沒有正解，要 AI 幫忙判斷詞性/字義/例句
+const DEFAULT_AI_PROMPT_NEW =
+  "請針對英文單字「{word}」依下列要求作答：① 主要詞性（從 noun, verb, adj., adv., prep., conj., pron., art., interj., aux., det., inf., number 中挑選；可多個）② 對應每個詞性給中文字義；多詞性時用「／」分隔每組，同詞性內多義用「、」分隔。範例：verb → 拋棄、捨棄、中止；noun → 盡情、放縱 ③ 對每個詞性各舉一句例句（附中譯）④ 字根／字首／字尾拆解 ⑤ 此字的單字歷史（如能具體到年份範圍也請提供）";
 
 function loadState() {
   try {
@@ -25,6 +30,7 @@ function loadState() {
       resetDays: { ...DEFAULT_RESET_DAYS, ...(s.resetDays || {}) },
       voiceName: s.voiceName || "auto",
       aiPrompt: s.aiPrompt || DEFAULT_AI_PROMPT,
+      aiPromptNew: s.aiPromptNew || DEFAULT_AI_PROMPT_NEW,
     };
   } catch (e) {
     console.error("loadState 失敗", e);
@@ -39,7 +45,8 @@ function defaultState() {
     heatmap: {},         // { "YYYY-MM-DD": count }（獨立事件記錄，不受重設影響）
     resetDays: { ...DEFAULT_RESET_DAYS },
     voiceName: "auto",   // 發音語音名稱，"auto" = 自動選擇最好的
-    aiPrompt: DEFAULT_AI_PROMPT,  // AI 指令範本（{word} 佔位符）
+    aiPrompt: DEFAULT_AI_PROMPT,        // 複習字卡用
+    aiPromptNew: DEFAULT_AI_PROMPT_NEW, // 新單字加入用
   };
 }
 
@@ -90,6 +97,7 @@ function importFromFile(file) {
           resetDays: { ...DEFAULT_RESET_DAYS, ...(data.resetDays || {}) },
           voiceName: data.voiceName || "auto",
           aiPrompt: data.aiPrompt || DEFAULT_AI_PROMPT,
+          aiPromptNew: data.aiPromptNew || DEFAULT_AI_PROMPT_NEW,
         };
         resolve(state);
       } catch (err) {
@@ -132,5 +140,5 @@ window.VocabStorage = {
   loadState, saveState,
   exportToFile, importFromFile,
   isMastered, markMastered, addUserWord, recordEvent, localDateKey,
-  DEFAULT_RESET_DAYS, DEFAULT_AI_PROMPT,
+  DEFAULT_RESET_DAYS, DEFAULT_AI_PROMPT, DEFAULT_AI_PROMPT_NEW,
 };
