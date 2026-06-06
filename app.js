@@ -7,6 +7,9 @@ const POS_OPTIONS = [
   "inf.", "number",
 ];
 
+// 等級選項（自加單字可指定，套用等級重設天數）
+const LEVEL_OPTIONS = ["初級", "中級", "中高級", "高級", "優級"];
+
 let GEPT_DB = {};   // { word: {w, p[], z, l, a, n} }
 let STATE = null;   // localStorage 狀態
 let queue = [];     // 待複習單字佇列（含 known + unknown）
@@ -205,6 +208,14 @@ function bindEvents() {
       e.target.classList.toggle("selected");
       return;
     }
+    // Level chip 單選
+    if (e.target.classList?.contains("level-chip")) {
+      const grid = e.target.parentElement;
+      const wasSelected = e.target.classList.contains("selected");
+      grid.querySelectorAll(".level-chip.selected").forEach(b => b.classList.remove("selected"));
+      if (!wasSelected) e.target.classList.add("selected");
+      return;
+    }
     const action = e.target.dataset.action;
     const w = e.target.dataset.word;
     if (action === "edit-useradded") editUserAdded(w);
@@ -394,14 +405,16 @@ function renderAiPrompt(word, ctx, mode = "review") {
   `;
 }
 
-// 顯示單字的等級標籤：GEPT 字 → 等級（藍色）；自加 → 「自加」（紫色）
+// 顯示單字的等級標籤：GEPT 字 → 等級（藍色）；自加 → 等級（紫色，未設則顯示「自加」）
 function renderLevelTag(word) {
   const entry = GEPT_DB[word];
   if (entry && entry.l) {
     return `<span class="tag tag-level">${entry.l}</span>`;
   }
-  if (STATE.userAdded[word]) {
-    return `<span class="tag tag-user">自加</span>`;
+  const userEntry = STATE.userAdded[word];
+  if (userEntry) {
+    const label = userEntry.l || "自加";
+    return `<span class="tag tag-user">${label}</span>`;
   }
   return `<span class="tag">未知</span>`;
 }
@@ -410,6 +423,9 @@ function renderLevelTag(word) {
 function showUnknownForm(word, progress) {
   const posCheckboxes = POS_OPTIONS.map(p => `
     <button type="button" class="pos-chip" data-pos="${p}">${p}</button>
+  `).join("");
+  const levelChips = LEVEL_OPTIONS.map(l => `
+    <button type="button" class="level-chip" data-action="select-level" data-level="${l}">${l}</button>
   `).join("");
 
   document.getElementById("card-area").innerHTML = `
@@ -429,6 +445,10 @@ function showUnknownForm(word, progress) {
         <label>詞性（可多選）</label>
         <div class="pos-grid">${posCheckboxes}</div>
       </div>
+      <div class="form-row">
+        <label>等級（單選，決定複習週期；不選 = 中高級）</label>
+        <div class="level-grid">${levelChips}</div>
+      </div>
       <div class="card-actions">
         <button class="btn-primary" data-action="save-unknown">加入單字庫</button>
       </div>
@@ -446,8 +466,9 @@ function showUnknownForm(word, progress) {
 function handleSaveUnknown(word) {
   const userMeaning = document.getElementById("user-meaning").value.trim();
   const userPos = Array.from(document.querySelectorAll(".pos-chip.selected")).map(b => b.dataset.pos);
+  const userLevel = document.querySelector(".level-chip.selected")?.dataset.level || "";
   // 無條件寫入 userAdded（即使字義為空也寫，避免資料遺失）
-  window.VocabStorage.addUserWord(word, userMeaning, userPos, STATE);
+  window.VocabStorage.addUserWord(word, userMeaning, userPos, userLevel, STATE);
   refreshStats();
   queueIdx++;
   showCurrentCard();
@@ -457,6 +478,15 @@ function onCardClick(e) {
   // POS chip toggle
   if (e.target.classList?.contains("pos-chip")) {
     e.target.classList.toggle("selected");
+    return;
+  }
+
+  // Level chip 單選（同列其他先取消）
+  if (e.target.classList?.contains("level-chip")) {
+    const grid = e.target.parentElement;
+    const wasSelected = e.target.classList.contains("selected");
+    grid.querySelectorAll(".level-chip.selected").forEach(b => b.classList.remove("selected"));
+    if (!wasSelected) e.target.classList.add("selected");
     return;
   }
 
@@ -764,13 +794,15 @@ function openMasteredList() {
         const entry = GEPT_DB[w] || STATE.userAdded[w] || {};
         const z = entry.z || "(無資料)";
         const p = (entry.p || []).join(", ") || "—";
-        const l = entry.l || (STATE.userAdded[w] ? "自加" : "?");
+        const isUser = !GEPT_DB[w] && !!STATE.userAdded[w];
+        const l = entry.l || (isUser ? "自加" : "?");
+        const tagCls = isUser ? "list-tag list-tag-user" : "list-tag";
         return `
           <div class="list-row">
             <div class="list-info">
               <div class="list-line1">
                 <span class="list-word">${w}</span>
-                <span class="list-tag">${l}</span>
+                <span class="${tagCls}">${l}</span>
                 <span class="list-pos">${p}</span>
               </div>
               <div class="list-z">${z}</div>
@@ -808,11 +840,13 @@ function openUserAddedList() {
       .map(([w, rec]) => {
         const p = (rec.p || []).join(", ") || "—";
         const z = rec.z || "(無字義)";
+        const l = rec.l || "自加";
         return `
           <div class="list-row" data-word="${w}">
             <div class="list-info">
               <div class="list-line1">
                 <span class="list-word">${w}</span>
+                <span class="list-tag list-tag-user">${l}</span>
                 <span class="list-pos">${p}</span>
               </div>
               <div class="list-z">${z}</div>
@@ -838,6 +872,9 @@ function editUserAdded(word) {
   const posCheckboxes = POS_OPTIONS.map(p => `
     <button type="button" class="pos-chip ${rec.p.includes(p) ? "selected" : ""}" data-pos="${p}">${p}</button>
   `).join("");
+  const levelChips = LEVEL_OPTIONS.map(l => `
+    <button type="button" class="level-chip ${rec.l === l ? "selected" : ""}" data-action="select-level" data-level="${l}">${l}</button>
+  `).join("");
   row.innerHTML = `
     <div class="list-edit">
       <div class="list-word">${word}</div>
@@ -848,6 +885,10 @@ function editUserAdded(word) {
       <div class="form-row">
         <label>詞性</label>
         <div class="pos-grid">${posCheckboxes}</div>
+      </div>
+      <div class="form-row">
+        <label>等級（單選；不選 = 中高級）</label>
+        <div class="level-grid">${levelChips}</div>
       </div>
       <div class="edit-actions">
         <button class="btn-secondary" data-action="cancel-edit-useradded">取消</button>
@@ -862,7 +903,8 @@ function saveEditUserAdded(word) {
   const row = document.querySelector(`#useradded-list-content .list-row[data-word="${word}"]`);
   const z = row.querySelector(".edit-z").value.trim();
   const pos = Array.from(row.querySelectorAll(".pos-chip.selected")).map(b => b.dataset.pos);
-  STATE.userAdded[word] = { z, p: pos };
+  const level = row.querySelector(".level-chip.selected")?.dataset.level || "";
+  STATE.userAdded[word] = { z, p: pos, l: level };
   window.VocabStorage.saveState(STATE);
   openUserAddedList();
 }

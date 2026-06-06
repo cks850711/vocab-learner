@@ -14,9 +14,9 @@ const DEFAULT_RESET_DAYS = {
 const DEFAULT_AI_PROMPT =
   "請針對英文單字「{word}」提供：① 針對正解字義與正解詞性提供實用例句（附中譯）② 字根／字首／字尾拆解 ③ 此字的單字歷史(如能具體到年份範圍也請提供)";
 
-// 用於「新單字加入」：沒有正解，要 AI 幫忙判斷詞性/字義/例句
+// 用於「新單字加入」：沒有正解，要 AI 幫忙判斷詞性/字義/例句/等級
 const DEFAULT_AI_PROMPT_NEW =
-  "請針對英文單字「{word}」依下列要求作答：① 主要詞性（從 noun, verb, adj., adv., prep., conj., pron., art., interj., aux., det., inf., number 中挑選；可多個）② 對應每個詞性給中文字義；多詞性時用「／」分隔每組，同詞性內多義用「、」分隔。範例：verb → 拋棄、捨棄、中止；noun → 盡情、放縱 ③ 對每個詞性各舉一句例句（附中譯）④ 字根／字首／字尾拆解 ⑤ 此字的單字歷史（如能具體到年份範圍也請提供）";
+  "請針對英文單字「{word}」依下列要求作答：① 主要詞性（從 noun, verb, adj., adv., prep., conj., pron., art., interj., aux., det., inf., number 中挑選；可多個）② 對應每個詞性給中文字義；多詞性時用「／」分隔每組，同詞性內多義用「、」分隔。範例：verb → 拋棄、捨棄、中止；noun → 盡情、放縱 ③ 建議此單字應歸屬的 GEPT 等級（從 初級, 中級, 中高級, 高級, 優級 擇一，並簡短說明依據）④ 對每個詞性各舉一句例句（附中譯）⑤ 字根／字首／字尾拆解 ⑥ 此字的單字歷史（如能具體到年份範圍也請提供）";
 
 function loadState() {
   try {
@@ -114,9 +114,10 @@ function isMastered(word, geptDb, state) {
   const record = state.mastered[word];
   if (!record) return false;
 
-  // 取得等級：先從 GEPT 表找，若是用戶自加則沒有等級 → 視為「中高級」處理
+  // 取得等級：先從 GEPT 表找；自加單字看 userAdded.l；都沒 → 預設「中高級」
   const entry = geptDb[word];
-  const level = entry ? entry.l : "中高級";
+  const userEntry = state.userAdded[word];
+  const level = (entry && entry.l) || (userEntry && userEntry.l) || "中高級";
 
   const days = state.resetDays[level];
   if (days === null || days === undefined) return true;  // 永不重設
@@ -131,8 +132,8 @@ function markMastered(word, state) {
   saveState(state);
 }
 
-function addUserWord(word, z, p, state) {
-  state.userAdded[word] = { z, p };
+function addUserWord(word, z, p, l, state) {
+  state.userAdded[word] = { z, p, l: l || "" };
   saveState(state);
 }
 

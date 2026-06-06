@@ -273,6 +273,36 @@
     font-weight: 500;
   }
 
+  /* 等級單選 chip — 樣式仿 pos-chip，選中色用紫色與詞性區分 */
+  .level-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .level-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px 14px;
+    min-height: 36px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .level-chip:hover {
+    border-color: var(--purple);
+    color: var(--text);
+  }
+  .level-chip.selected {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: var(--bg);
+    font-weight: 500;
+  }
+
   /* 比對階段 */
   .compare-block {
     text-align: left;
@@ -630,6 +660,10 @@
     padding: 1px 6px;
     border-radius: 8px;
   }
+  .list-tag-user {
+    color: var(--purple);
+    background: rgba(188, 140, 255, 0.12);
+  }
   .list-pos {
     font-size: 12px;
     color: var(--text-dim);
@@ -832,9 +866,9 @@
 <!-- compromise.js (lemmatizer) -->
 <script src="https://cdn.jsdelivr.net/npm/compromise@14/builds/compromise.min.js"></script>
 
-<script src="storage.js?v=14"></script>
-<script src="parser.js?v=14"></script>
-<script src="app.js?v=14"></script>
+<script src="storage.js?v=15"></script>
+<script src="parser.js?v=15"></script>
+<script src="app.js?v=15"></script>
 
 </body>
 </html>
