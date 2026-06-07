@@ -445,7 +445,7 @@ function showUnknownForm(word, progress) {
       ${renderAiPrompt(word, null, "new")}
       <div class="form-row">
         <label>字義</label>
-        <input type="text" id="user-meaning" placeholder="輸入中文字義" autofocus>
+        <textarea id="user-meaning" placeholder="輸入中文字義（可多行：用「／」分隔不同詞性、「、」分隔同義）" rows="3" autofocus></textarea>
       </div>
       <div class="form-row">
         <label>詞性（可多選）</label>
@@ -460,13 +460,8 @@ function showUnknownForm(word, progress) {
       </div>
     </div>
   `;
-  const inp = document.getElementById("user-meaning");
-  inp.focus();
-  inp.addEventListener("keydown", e => {
-    if (e.key !== "Enter") return;
-    if (e.isComposing || e.keyCode === 229) return;
-    handleSaveUnknown(word);
-  });
+  document.getElementById("user-meaning").focus();
+  // 不綁 Enter 送出：textarea 的 Enter 應該是換行，用戶用按鈕送出即可
 }
 
 function handleSaveUnknown(word) {
@@ -925,7 +920,7 @@ function editUserAdded(word) {
       <div class="list-word">${word}</div>
       <div class="form-row">
         <label>字義</label>
-        <input type="text" class="edit-z" value="${(rec.z || "").replace(/"/g, "&quot;")}">
+        <textarea class="edit-z" rows="2">${escapeHtml(rec.z || "")}</textarea>
       </div>
       <div class="form-row">
         <label>詞性</label>
