@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>單字學習器</title>
 <style>
   :root {
@@ -728,21 +728,12 @@
     font-size: 12px;
     flex-shrink: 0;
   }
-  .list-edit {
-    width: 100%;
-    padding: 8px;
-    background: var(--bg);
-    border: 1px solid var(--accent);
-    border-radius: 8px;
+  /* 編輯模式（蓋住自加清單） */
+  .edit-view-word {
+    font-family: "Newsreader", "Georgia", serif;
+    color: var(--purple);
+    font-weight: 500;
   }
-  .list-edit .form-row { margin: 8px 0; }
-  .edit-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 12px;
-  }
-
   /* Danger zone */
   .danger-zone {
     margin-top: 20px;
@@ -902,32 +893,37 @@
 <!-- 自加單字清單 Modal -->
 <div class="modal" id="useradded-modal">
   <div class="modal-content modal-list">
-    <h2>自加單字</h2>
-    <div class="list-toolbar">
-      <select id="useradded-filter-level" class="list-filter-select">
-        <option value="">全部等級</option>
-        <option value="初級">初級</option>
-        <option value="中級">中級</option>
-        <option value="中高級">中高級</option>
-        <option value="高級">高級</option>
-        <option value="優級">優級</option>
-        <option value="(尚未指定)">尚未指定</option>
-      </select>
-      <input type="text" id="useradded-filter-search" class="list-filter-search" placeholder="🔍 從第一個字母開始輸入…" autocomplete="off">
+    <!-- 清單模式 -->
+    <div id="useradded-list-view">
+      <h2>自加單字</h2>
+      <div class="list-toolbar">
+        <select id="useradded-filter-level" class="list-filter-select">
+          <option value="">全部等級</option>
+          <option value="初級">初級</option>
+          <option value="中級">中級</option>
+          <option value="中高級">中高級</option>
+          <option value="高級">高級</option>
+          <option value="優級">優級</option>
+          <option value="(尚未指定)">尚未指定</option>
+        </select>
+        <input type="text" id="useradded-filter-search" class="list-filter-search" placeholder="🔍 從第一個字母開始輸入…" autocomplete="off">
+      </div>
+      <div id="useradded-list-content" class="list-container"></div>
+      <div class="modal-actions">
+        <button id="btn-useradded-close">關閉</button>
+      </div>
     </div>
-    <div id="useradded-list-content" class="list-container"></div>
-    <div class="modal-actions">
-      <button id="btn-useradded-close">關閉</button>
-    </div>
+    <!-- 編輯模式（蓋住清單） -->
+    <div id="useradded-edit-view" style="display:none;"></div>
   </div>
 </div>
 
 <!-- compromise.js (lemmatizer) -->
 <script src="https://cdn.jsdelivr.net/npm/compromise@14/builds/compromise.min.js"></script>
 
-<script src="storage.js?v=18"></script>
-<script src="parser.js?v=18"></script>
-<script src="app.js?v=18"></script>
+<script src="storage.js?v=19"></script>
+<script src="parser.js?v=19"></script>
+<script src="app.js?v=19"></script>
 
 </body>
 </html>

@@ -208,7 +208,8 @@ function bindEvents() {
     const w = e.target.dataset.word;
     if (action === "unmaster") unmasterWord(w);
   });
-  document.getElementById("useradded-list-content").addEventListener("click", e => {
+  // 在整個 useradded modal 委派（list-view + edit-view 都包進來）
+  document.querySelector("#useradded-modal .modal-content").addEventListener("click", e => {
     // POS chip toggle in edit form
     if (e.target.classList?.contains("pos-chip")) {
       e.target.classList.toggle("selected");
@@ -226,7 +227,7 @@ function bindEvents() {
     const w = e.target.dataset.word;
     if (action === "edit-useradded") editUserAdded(w);
     else if (action === "save-edit-useradded") saveEditUserAdded(w);
-    else if (action === "cancel-edit-useradded") renderUserAddedList();
+    else if (action === "cancel-edit-useradded") exitEditView();
     else if (action === "delete-useradded") deleteUserAdded(w);
   });
 }
@@ -897,56 +898,70 @@ function renderUserAddedList() {
 function openUserAddedList() {
   document.getElementById("useradded-filter-level").value = "";
   document.getElementById("useradded-filter-search").value = "";
+  exitEditView();   // 確保開啟時回到清單模式
   renderUserAddedList();
   document.getElementById("useradded-modal").style.display = "flex";
 }
 
 function closeUserAddedList() {
+  exitEditView();   // 關閉時也清掉編輯狀態
   document.getElementById("useradded-modal").style.display = "none";
+}
+
+function enterEditView() {
+  document.getElementById("useradded-list-view").style.display = "none";
+  document.getElementById("useradded-edit-view").style.display = "block";
+}
+
+function exitEditView() {
+  document.getElementById("useradded-edit-view").style.display = "none";
+  document.getElementById("useradded-edit-view").innerHTML = "";
+  document.getElementById("useradded-list-view").style.display = "block";
 }
 
 function editUserAdded(word) {
   const rec = STATE.userAdded[word];
-  const row = document.querySelector(`#useradded-list-content .list-row[data-word="${word}"]`);
-  if (!row) return;
+  if (!rec) return;
   const posCheckboxes = POS_OPTIONS.map(p => `
     <button type="button" class="pos-chip ${rec.p.includes(p) ? "selected" : ""}" data-pos="${p}">${p}</button>
   `).join("");
   const levelChips = LEVEL_OPTIONS.map(l => `
     <button type="button" class="level-chip ${rec.l === l ? "selected" : ""}" data-action="select-level" data-level="${l}">${l}</button>
   `).join("");
-  row.innerHTML = `
-    <div class="list-edit">
-      <div class="list-word">${word}</div>
-      <div class="form-row">
-        <label>字義</label>
-        <textarea class="edit-z" rows="2">${escapeHtml(rec.z || "")}</textarea>
-      </div>
-      <div class="form-row">
-        <label>詞性</label>
-        <div class="pos-grid">${posCheckboxes}</div>
-      </div>
-      <div class="form-row">
-        <label>等級（單選；不選 = 中高級）</label>
-        <div class="level-grid">${levelChips}</div>
-      </div>
-      <div class="edit-actions">
-        <button class="btn-secondary" data-action="cancel-edit-useradded">取消</button>
-        <button class="btn-primary" data-action="save-edit-useradded" data-word="${word}">儲存</button>
-      </div>
+
+  const editView = document.getElementById("useradded-edit-view");
+  editView.innerHTML = `
+    <h2>編輯：<span class="edit-view-word">${word}</span></h2>
+    <div class="form-row">
+      <label>字義</label>
+      <textarea class="edit-z" rows="3">${escapeHtml(rec.z || "")}</textarea>
+    </div>
+    <div class="form-row">
+      <label>詞性</label>
+      <div class="pos-grid">${posCheckboxes}</div>
+    </div>
+    <div class="form-row">
+      <label>等級（單選；不選 = 中高級）</label>
+      <div class="level-grid">${levelChips}</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" data-action="cancel-edit-useradded">取消</button>
+      <button class="btn-primary" data-action="save-edit-useradded" data-word="${word}">儲存</button>
     </div>
   `;
-  row.querySelector(".edit-z").focus();
+  enterEditView();
+  editView.querySelector(".edit-z").focus();
 }
 
 function saveEditUserAdded(word) {
-  const row = document.querySelector(`#useradded-list-content .list-row[data-word="${word}"]`);
-  const z = row.querySelector(".edit-z").value.trim();
-  const pos = Array.from(row.querySelectorAll(".pos-chip.selected")).map(b => b.dataset.pos);
-  const level = row.querySelector(".level-chip.selected")?.dataset.level || "";
+  const editView = document.getElementById("useradded-edit-view");
+  const z = editView.querySelector(".edit-z").value.trim();
+  const pos = Array.from(editView.querySelectorAll(".pos-chip.selected")).map(b => b.dataset.pos);
+  const level = editView.querySelector(".level-chip.selected")?.dataset.level || "";
   STATE.userAdded[word] = { z, p: pos, l: level };
   window.VocabStorage.saveState(STATE);
-  renderUserAddedList();   // 保留當前篩選
+  exitEditView();
+  renderUserAddedList();
 }
 
 function deleteUserAdded(word) {
