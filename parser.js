@@ -18,7 +18,16 @@ const STOP_WORDS = new Set([
 
 // 從文字中抓出英文單字（保留連字號和撇號），轉小寫去重
 function tokenize(text) {
-  const raw = text.match(/[a-zA-Z][a-zA-Z'\-]*[a-zA-Z]|[a-zA-Z]/g) || [];
+  // 預處理：正規化引號 + 還原英文縮寫，避免 don't/didn't 被切成 don/didn
+  const normalized = text
+    .replace(/[‘’‛＇]/g, "'")   // 各種彎/全形單引號 → ASCII 直引號
+    .replace(/\bwon't\b/gi,  "will")               // 不規則 won't → will
+    .replace(/\bcan't\b/gi,  "can")                // 不規則 can't → can
+    .replace(/\bshan't\b/gi, "shall")              // 不規則 shan't → shall
+    .replace(/\bain't\b/gi,  "")                   // ain't 無標準展開，直接捨棄
+    .replace(/n't\b/gi, "")                        // 一般 n't 後綴 → 還原成主動詞（didn't → did）
+    .replace(/'(s|re|ve|ll|d|m)\b/gi, "");         // 's/'re/'ve/'ll/'d/'m → 還原成主詞（it's → it）
+  const raw = normalized.match(/[a-zA-Z][a-zA-Z'\-]*[a-zA-Z]|[a-zA-Z]/g) || [];
   const seen = new Set();
   const result = [];
   for (const w of raw) {
