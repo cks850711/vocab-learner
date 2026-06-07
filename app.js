@@ -187,6 +187,12 @@ function bindEvents() {
   // mastered/userAdded 清單按鈕
   document.getElementById("btn-mastered-list").addEventListener("click", openMasteredList);
   document.getElementById("btn-useradded-list").addEventListener("click", openUserAddedList);
+
+  // 清單篩選（等級下拉 + 搜尋框，即時觸發）
+  document.getElementById("mastered-filter-level").addEventListener("change", renderMasteredList);
+  document.getElementById("mastered-filter-search").addEventListener("input", renderMasteredList);
+  document.getElementById("useradded-filter-level").addEventListener("change", renderUserAddedList);
+  document.getElementById("useradded-filter-search").addEventListener("input", renderUserAddedList);
   document.getElementById("btn-mastered-close").addEventListener("click", closeMasteredList);
   document.getElementById("btn-useradded-close").addEventListener("click", closeUserAddedList);
   document.getElementById("mastered-modal").addEventListener("click", e => {
@@ -220,7 +226,7 @@ function bindEvents() {
     const w = e.target.dataset.word;
     if (action === "edit-useradded") editUserAdded(w);
     else if (action === "save-edit-useradded") saveEditUserAdded(w);
-    else if (action === "cancel-edit-useradded") openUserAddedList();
+    else if (action === "cancel-edit-useradded") renderUserAddedList();
     else if (action === "delete-useradded") deleteUserAdded(w);
   });
 }
@@ -782,14 +788,29 @@ function refreshStats() {
 }
 
 // ============== 已背單字清單 ==============
-function openMasteredList() {
-  const entries = Object.entries(STATE.mastered);
+function renderMasteredList() {
+  const levelFilter = document.getElementById("mastered-filter-level").value;
+  const searchQ = document.getElementById("mastered-filter-search").value.trim().toLowerCase();
+  const all = Object.entries(STATE.mastered);
+  const filtered = all
+    .filter(([w]) => searchQ === "" || w.startsWith(searchQ))
+    .filter(([w]) => {
+      if (!levelFilter) return true;
+      const entry = GEPT_DB[w];
+      const userEntry = STATE.userAdded[w];
+      if (levelFilter === "自加") return !entry && !!userEntry;
+      const lvl = (entry && entry.l) || (userEntry && userEntry.l) || "";
+      return lvl === levelFilter;
+    })
+    .sort(([a], [b]) => a.localeCompare(b));
+
   let html;
-  if (entries.length === 0) {
+  if (all.length === 0) {
     html = `<div class="empty">尚無已背起來的單字</div>`;
+  } else if (filtered.length === 0) {
+    html = `<div class="empty">找不到符合條件的單字</div>`;
   } else {
-    html = entries
-      .sort(([a], [b]) => a.localeCompare(b))
+    html = filtered
       .map(([w]) => {
         const entry = GEPT_DB[w] || STATE.userAdded[w] || {};
         const z = entry.z || "(無資料)";
@@ -813,6 +834,12 @@ function openMasteredList() {
       }).join("");
   }
   document.getElementById("mastered-list-content").innerHTML = html;
+}
+
+function openMasteredList() {
+  document.getElementById("mastered-filter-level").value = "";
+  document.getElementById("mastered-filter-search").value = "";
+  renderMasteredList();
   document.getElementById("mastered-modal").style.display = "flex";
 }
 
@@ -825,18 +852,30 @@ function unmasterWord(word) {
   delete STATE.mastered[word];
   window.VocabStorage.saveState(STATE);
   refreshStats();
-  openMasteredList();
+  renderMasteredList();   // 保留當前篩選
 }
 
 // ============== 自加單字清單 ==============
-function openUserAddedList() {
-  const entries = Object.entries(STATE.userAdded);
+function renderUserAddedList() {
+  const levelFilter = document.getElementById("useradded-filter-level").value;
+  const searchQ = document.getElementById("useradded-filter-search").value.trim().toLowerCase();
+  const all = Object.entries(STATE.userAdded);
+  const filtered = all
+    .filter(([w]) => searchQ === "" || w.startsWith(searchQ))
+    .filter(([_, rec]) => {
+      if (!levelFilter) return true;
+      if (levelFilter === "(尚未指定)") return !rec.l;
+      return rec.l === levelFilter;
+    })
+    .sort(([a], [b]) => a.localeCompare(b));
+
   let html;
-  if (entries.length === 0) {
+  if (all.length === 0) {
     html = `<div class="empty">尚無自加單字</div>`;
+  } else if (filtered.length === 0) {
+    html = `<div class="empty">找不到符合條件的單字</div>`;
   } else {
-    html = entries
-      .sort(([a], [b]) => a.localeCompare(b))
+    html = filtered
       .map(([w, rec]) => {
         const p = (rec.p || []).join(", ") || "—";
         const z = rec.z || "(無字義)";
@@ -858,6 +897,12 @@ function openUserAddedList() {
       }).join("");
   }
   document.getElementById("useradded-list-content").innerHTML = html;
+}
+
+function openUserAddedList() {
+  document.getElementById("useradded-filter-level").value = "";
+  document.getElementById("useradded-filter-search").value = "";
+  renderUserAddedList();
   document.getElementById("useradded-modal").style.display = "flex";
 }
 
@@ -906,7 +951,7 @@ function saveEditUserAdded(word) {
   const level = row.querySelector(".level-chip.selected")?.dataset.level || "";
   STATE.userAdded[word] = { z, p: pos, l: level };
   window.VocabStorage.saveState(STATE);
-  openUserAddedList();
+  renderUserAddedList();   // 保留當前篩選
 }
 
 function deleteUserAdded(word) {
@@ -915,7 +960,7 @@ function deleteUserAdded(word) {
   delete STATE.mastered[word];
   window.VocabStorage.saveState(STATE);
   refreshStats();
-  openUserAddedList();
+  renderUserAddedList();   // 保留當前篩選
 }
 
 window.addEventListener("DOMContentLoaded", init);
